@@ -13,15 +13,20 @@ await Promise.all([
   mkdir(metadataDirectory, { recursive: true })
 ]);
 await cp(
-  new URL("./index.html", import.meta.url),
-  new URL("./dist/index.html", import.meta.url)
-);
-await cp(
   new URL("./.openai/hosting.json", import.meta.url),
   new URL("./dist/.openai/hosting.json", import.meta.url)
 );
 
-const html = await readFile(new URL("./index.html", import.meta.url), "utf8");
+const [template, apiKeyFile] = await Promise.all([
+  readFile(new URL("./index.html", import.meta.url), "utf8"),
+  readFile(new URL("./api-key.local.txt", import.meta.url), "utf8")
+]);
+const apiKey = apiKeyFile.trim();
+if (!/^AIza[\w-]{20,}$/.test(apiKey)) {
+  throw new Error("api-key.local.txt bevat geen geldige Google API-key");
+}
+const html = template.replace("__YOUTUBE_API_KEY__", apiKey);
+await writeFile(new URL("./dist/index.html", import.meta.url), html);
 const workerSource = `const html = ${JSON.stringify(html)};
 
 export default {
