@@ -142,7 +142,7 @@
             return;
           }
 
-          for (const item of items.slice(0, 8)) {
+          for (const item of items.slice(0, 6)) {
             const videoId = item.id?.videoId;
             if (!/^[\w-]{11}$/.test(videoId || "")) continue;
 
@@ -192,7 +192,7 @@
               part: "snippet",
               type: "video",
               videoEmbeddable: "true",
-              maxResults: "8",
+              maxResults: "6",
               q: normalizedQuery,
               key: apiKey
             });
