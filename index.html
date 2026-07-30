@@ -37,13 +37,13 @@
       }
       #results.is-visible { display: grid; }
       #results {
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         align-content: start;
         gap: 12px;
       }
       .result {
+        display: block;
         padding: 0;
-        border: 0;
         border-radius: 5px;
         background: #292929;
         color: #ddd;
@@ -60,10 +60,14 @@
       }
       .result span {
         display: block;
+        min-height: 50px;
         padding: 9px 10px 11px;
         font-size: 12px;
         font-weight: 600;
         line-height: 1.35;
+      }
+      @media (max-width: 420px) {
+        #results { grid-template-columns: 1fr; }
       }
       .empty {
         grid-column: 1 / -1;
@@ -138,13 +142,14 @@
             return;
           }
 
-          for (const item of items) {
+          for (const item of items.slice(0, 8)) {
             const videoId = item.id?.videoId;
             if (!/^[\w-]{11}$/.test(videoId || "")) continue;
 
-            const card = document.createElement("button");
+            const card = document.createElement("div");
             card.className = "result";
-            card.type = "button";
+            card.setAttribute("role", "button");
+            card.tabIndex = 0;
 
             const image = document.createElement("img");
             image.src = item.snippet?.thumbnails?.medium?.url || "";
@@ -156,6 +161,12 @@
 
             card.append(image, title);
             card.addEventListener("click", () => load(videoId));
+            card.addEventListener("keydown", (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                load(videoId);
+              }
+            });
             results.appendChild(card);
           }
 
