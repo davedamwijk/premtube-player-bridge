@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PremTube Player</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body, #player {
+        width: 100%;
+        height: 100%;
+        min-width: 200px;
+        min-height: 200px;
+        margin: 0;
+        overflow: hidden;
+        background: #111;
+      }
+      iframe {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main id="player" aria-label="YouTube-speler"></main>
+    <script>
+      (() => {
+        "use strict";
+
+        let player = null;
+        let pendingVideoId = null;
+
+        function send(type, detail) {
+          window.uxpHost?.postMessage({
+            source: "premtube-player",
+            type,
+            detail
+          });
+        }
+
+        function load(videoId) {
+          if (!/^[\w-]{11}$/.test(videoId)) {
+            send("error", "Ongeldige video-ID");
+            return;
+          }
+
+          if (player && typeof player.loadVideoById === "function") {
+            player.loadVideoById(videoId);
+          } else {
+            pendingVideoId = videoId;
+          }
+        }
+
+        window.addEventListener("message", (event) => {
+          if (event.data?.type === "load") load(event.data.videoId);
+        });
+
+        window.onYouTubeIframeAPIReady = () => {
+          player = new YT.Player("player", {
+            width: "100%",
+            height: "100%",
+            playerVars: {
+              autoplay: 0,
+              controls: 1,
+              playsinline: 1,
+              rel: 0
+            },
+            events: {
+              onReady: () => {
+                send("ready");
+                if (pendingVideoId) {
+                  player.loadVideoById(pendingVideoId);
+                  pendingVideoId = null;
+                }
+              },
+              onStateChange: (event) => {
+                if (event.data === YT.PlayerState.PLAYING) send("playing");
+                if (event.data === YT.PlayerState.PAUSED) send("paused");
+              },
+              onError: (event) => send("error", `YouTube-fout ${event.data}`)
+            }
+          });
+        };
+
+        const script = document.createElement("script");
+        script.src = "https://www.youtube.com/iframe_api";
+        script.async = true;
+        script.onerror = () => send("error", "YouTube API kon niet worden geladen");
+        document.head.appendChild(script);
+      })();
+    </script>
+  </body>
+</html>
