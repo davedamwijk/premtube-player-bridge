@@ -198,7 +198,9 @@
             results.textContent = "";
             const message = document.createElement("p");
             message.className = "empty";
-            message.textContent = "Zoeken is niet gelukt";
+            message.textContent = error instanceof Error
+              ? error.message
+              : "Zoeken is niet gelukt";
             results.appendChild(message);
             showResults();
             send("error", error instanceof Error ? error.message : "Zoeken is niet gelukt");
