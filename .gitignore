@@ -1,0 +1,6 @@
+.next/
+dist/
+node_modules/
+.DS_Store
+*.log
+api-key.local.txt
